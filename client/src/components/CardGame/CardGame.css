@@ -29,7 +29,8 @@
   margin: 0 auto;
   max-width: 900px;
   padding: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
+  min-height: 400px;
 }
 
 .card {
@@ -37,9 +38,9 @@
   perspective: 1000px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  max-width: 180px;
+  height: 180px;
+  width: 135px;
   margin: 0 auto;
-  width: 100%;
 }
 
 .card:hover:not(.flipped):not(.matched) {
@@ -105,8 +106,12 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  height: 100%;
+  max-height: calc(100% - 40px);
+  overflow: hidden;
 }
 
 .card-image {
@@ -135,6 +140,8 @@
   word-wrap: break-word;
   line-height: 1.2;
   margin: 8px 0;
+  text-align: center;
+  width: 100%;
 }
 
 .card-description {
@@ -307,18 +314,15 @@
 }
 
 @media (max-width: 768px) {
-  .card-game {
-    padding: 12px;
-  }
-
-  .game-header {
-    padding: 12px;
-    margin-bottom: 20px;
-  }
-
   .game-board {
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    padding: 8px;
+    padding: 12px;
+  }
+  
+  .card {
+    height: 160px;
+    width: 120px;
   }
 
   .card-text {
@@ -332,5 +336,16 @@
   .stat-item {
     padding: 4px 8px;
     font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    height: 140px;
+    width: 105px;
+  }
+  
+  .card-text {
+    font-size: 1.2em;
   }
 } 
