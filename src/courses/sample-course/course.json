@@ -1,0 +1,26 @@
+{
+  "id": "sample-course",
+  "title": "Sample Course",
+  "description": "A demonstration of how courses are structured and integrated into the platform",
+  "author": "kwakwakwak",
+  "tags": ["demo", "template"],
+  "level": "beginner",
+  "modules": [
+    {
+      "id": "module-1",
+      "title": "Getting Started",
+      "lessons": [
+        {
+          "id": "lesson-1",
+          "title": "Introduction",
+          "path": "lessons/introduction.html"
+        },
+        {
+          "id": "lesson-2",
+          "title": "Setup",
+          "path": "lessons/setup.html"
+        }
+      ]
+    }
+  ]
+}

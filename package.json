@@ -1,0 +1,17 @@
+{
+  "name": "edu-kwakwakwak",
+  "version": "1.0.0",
+  "description": "Education platform for kwakwakwak.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo \"Add your start script here\""
+  },
+  "keywords": [
+    "education",
+    "courses",
+    "kwakwakwak"
+  ],
+  "author": "kwakwakwak",
+  "license": "MIT"
+}
