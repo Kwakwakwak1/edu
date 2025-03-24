@@ -90,16 +90,18 @@
   height: 100vh;
   background: white;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, visibility 0.3s ease-in-out;
   z-index: 200;
   padding: 80px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  visibility: hidden;
 }
 
 .side-menu.open {
   transform: translateX(280px);
+  visibility: visible;
 }
 
 .side-menu a {
@@ -122,13 +124,15 @@
   height: 100vh;
   background: white;
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, visibility 0.3s ease-in-out;
   z-index: 200;
   padding: 80px 20px 20px;
+  visibility: hidden;
 }
 
 .settings-panel.open {
   transform: translateX(-320px);
+  visibility: visible;
 }
 
 .close-menu,
