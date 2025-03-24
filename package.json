@@ -1,17 +1,20 @@
 {
-  "name": "edu-kwakwakwak",
+  "name": "course-platform",
   "version": "1.0.0",
-  "description": "Education platform for kwakwakwak.com",
-  "main": "index.js",
+  "description": "A simple course platform",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "echo \"Add your start script here\""
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "build": "cd client && npm run build",
+    "client": "cd client && npm run dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run client\""
   },
-  "keywords": [
-    "education",
-    "courses",
-    "kwakwakwak"
-  ],
-  "author": "kwakwakwak",
-  "license": "MIT"
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
+  }
 }

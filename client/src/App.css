@@ -1,0 +1,114 @@
+:root {
+  --primary-color: #2563eb;
+  --text-color: #1f2937;
+  --background-color: #ffffff;
+  --section-spacing: 2rem;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.welcome {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.start-button {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  margin-top: 2rem;
+  transition: background-color 0.2s;
+}
+
+.start-button:hover {
+  background-color: #1d4ed8;
+}
+
+.course-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.course-description {
+  font-size: 1.2rem;
+  color: #4b5563;
+  margin: 1rem 0 2rem;
+}
+
+.course-info {
+  background-color: #f3f4f6;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  background-color: #e5e7eb;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+}
+
+.module {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.module h2 {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+
+.lessons {
+  list-style: none;
+  padding: 0;
+}
+
+.lessons li {
+  margin-bottom: 0.75rem;
+}
+
+.lessons a {
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.lessons a:hover {
+  background-color: #f3f4f6;
+}
+
+.lesson-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.lesson-content {
+  line-height: 1.6;
+}
+
+.course-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
