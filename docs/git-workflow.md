@@ -73,6 +73,56 @@ You should see:
 - "Your branch is up to date with 'origin/main'"
 - "nothing to commit, working tree clean"
 
+## Audio File Management
+
+### Generating Sound Files
+The repository now includes tools for generating sound files:
+
+#### Using the Command Line Utility
+```bash
+cd client
+npm run generate-sounds "word1,word2,word3" [outputDir] [voice] [prefix]
+```
+
+Example:
+```bash
+npm run generate-sounds "apple,banana,cherry" "sounds/fruits" "Samantha" "fruit"
+```
+
+#### Using the Sound Generation Server
+1. Start the server:
+```bash
+cd client
+npm run server
+```
+
+2. Use the web interface or API endpoint:
+```
+POST http://localhost:3001/api/generate-sounds
+```
+with JSON body:
+```json
+{
+  "words": "cat,dog,house",
+  "voice": "Alex", 
+  "outputDir": "sounds/words",
+  "prefix": ""
+}
+```
+
+### Committing Sound Files
+When adding new sound files to the repository:
+
+1. Ensure the files are correctly generated and placed in the appropriate directory
+2. Stage only the necessary sound files:
+```bash
+git add client/public/sounds/specific-file.mp3
+```
+3. Create a descriptive commit:
+```bash
+git commit -m "feat: add sound files for animals vocabulary"
+```
+
 ## Additional Tips
 
 ### View Recent Commits
@@ -102,4 +152,16 @@ git checkout -b <branch_name>
 Switch branches:
 ```bash
 git checkout <branch_name>
-``` 
+```
+
+### Pulling Latest Changes
+Before starting work, always pull the latest changes:
+```bash
+git pull
+```
+
+### Resolving Conflicts
+If you encounter merge conflicts:
+1. Open the conflicted files and resolve the conflicts
+2. Stage the resolved files: `git add <file_path>`
+3. Complete the merge: `git commit` 

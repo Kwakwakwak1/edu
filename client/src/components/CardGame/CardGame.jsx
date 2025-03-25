@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import GameLayout from '../layout/GameLayout';
+import { preloadSounds, playSound } from '../../../utils/soundManager';
 import './CardGame.css';
 
 // Move config outside component to prevent circular dependency
@@ -44,7 +45,11 @@ const CardGame = ({ config = defaultConfig }) => {
     timerDuration: config.timerDuration,
     soundEnabled: true,
     showErrors: true,
+    voice: 'Alex',
+    customWords: ''
   });
+  const [soundsLoaded, setSoundsLoaded] = useState(false);
+  const [isGeneratingSounds, setIsGeneratingSounds] = useState(false);
 
   // Generate cards for current level
   const generateCards = useCallback((currentLevel) => {
@@ -73,6 +78,25 @@ const CardGame = ({ config = defaultConfig }) => {
   useEffect(() => {
     generateCards(level);
   }, [level, generateCards]);
+  
+  // Preload sounds
+  useEffect(() => {
+    const loadNumberSounds = async () => {
+      try {
+        const numberSounds = {};
+        for (let i = 1; i <= 10; i++) {
+          numberSounds[`number${i}`] = `${i}.mp3`;
+        }
+        
+        await preloadSounds(numberSounds);
+        setSoundsLoaded(true);
+      } catch (error) {
+        console.error('Failed to load sounds:', error);
+      }
+    };
+    
+    loadNumberSounds();
+  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -141,6 +165,14 @@ const CardGame = ({ config = defaultConfig }) => {
 
       // Match based on content.solution instead of value
       if (firstCard.content.solution === clickedCard.content.solution) {
+        // Play the number sound on successful match
+        if (settings.soundEnabled && soundsLoaded) {
+          const soundNumber = parseInt(firstCard.content.solution, 10);
+          if (soundNumber >= 1 && soundNumber <= 10) {
+            playSound(`number${soundNumber}`);
+          }
+        }
+        
         setMatchedPairs(prev => [...prev, firstCard.content.solution]);
         setGameStats(prev => ({
           ...prev,
@@ -170,6 +202,21 @@ const CardGame = ({ config = defaultConfig }) => {
   useEffect(() => {
     if (matchedPairs.length === config.cardsPerLevel(level)) {
       setLevelComplete(true);
+      
+      // Play level complete sound
+      if (settings.soundEnabled && soundsLoaded) {
+        // Play a sequence of sounds for level complete
+        setTimeout(() => {
+          if (level < config.maxLevel) {
+            // Play next number to indicate next level
+            playSound(`number${level + 1}`);
+          } else {
+            // Play number 10 for game completion
+            playSound('number10');
+          }
+        }, 500);
+      }
+      
       setTimeout(() => {
         if (level < config.maxLevel) {
           setLevel(prev => prev + 1);
@@ -179,7 +226,7 @@ const CardGame = ({ config = defaultConfig }) => {
         }
       }, 1500);
     }
-  }, [matchedPairs, level, config]);
+  }, [matchedPairs, level, config, settings.soundEnabled, soundsLoaded]);
 
   const renderCardContent = (card) => {
     const { type, text, imageUrl, solution, description, spelling, phonetic } = card.content;
@@ -209,6 +256,42 @@ const CardGame = ({ config = defaultConfig }) => {
         </div>
       </>
     );
+  };
+
+  // Function to handle sound generation
+  const handleGenerateSounds = async () => {
+    if (!settings.customWords.trim()) {
+      alert('Please enter words to generate sounds for');
+      return;
+    }
+    
+    setIsGeneratingSounds(true);
+    
+    try {
+      // Call our backend API
+      const response = await fetch('http://localhost:3001/api/generate-sounds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          words: settings.customWords,
+          voice: settings.voice
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate sounds');
+      }
+      
+      setIsGeneratingSounds(false);
+      alert(`Successfully generated ${Object.keys(data.results).length} sound files!`);
+      
+    } catch (error) {
+      console.error('Error generating sounds:', error);
+      alert('Failed to generate sounds: ' + error.message);
+      setIsGeneratingSounds(false);
+    }
   };
 
   const renderSettings = () => (
@@ -275,6 +358,63 @@ const CardGame = ({ config = defaultConfig }) => {
           Show Error Counter
         </label>
       </div>
+      
+      <hr />
+      
+      <h3>Sound Generator</h3>
+      <div className="setting-item">
+        <label>
+          Voice:
+          <select 
+            value={settings.voice}
+            onChange={(e) => setSettings(prev => ({
+              ...prev,
+              voice: e.target.value
+            }))}
+          >
+            <option value="Alex">Alex (US Male)</option>
+            <option value="Samantha">Samantha (US Female)</option>
+            <option value="Daniel">Daniel (UK Male)</option>
+            <option value="Karen">Karen (AU Female)</option>
+          </select>
+        </label>
+      </div>
+      
+      <div className="setting-item">
+        <label>
+          Words (comma-separated):
+          <textarea 
+            value={settings.customWords}
+            onChange={(e) => setSettings(prev => ({
+              ...prev,
+              customWords: e.target.value
+            }))}
+            placeholder="cat, dog, house, tree, book"
+            rows={3}
+            style={{ width: '100%', marginTop: '5px' }}
+          />
+        </label>
+      </div>
+      
+      <div className="setting-item">
+        <button 
+          onClick={handleGenerateSounds}
+          disabled={isGeneratingSounds || !settings.customWords.trim()}
+          style={{ 
+            padding: '8px 16px',
+            backgroundColor: isGeneratingSounds ? '#ccc' : '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isGeneratingSounds ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isGeneratingSounds ? 'Generating...' : 'Generate Sound Files'}
+        </button>
+        <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
+          Sounds will be saved to public/sounds/words/
+        </p>
+      </div>
     </div>
   );
 
@@ -333,6 +473,11 @@ const CardGame = ({ config = defaultConfig }) => {
                 matches: 0,
                 errors: 0,
               });
+              
+              // Play starting sound
+              if (settings.soundEnabled && soundsLoaded) {
+                playSound(`number${level}`);
+              }
             }}
           >
             {gameStats.startTime ? 'Play Again' : 'Start Game'}
