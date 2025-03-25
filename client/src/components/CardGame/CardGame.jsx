@@ -11,18 +11,20 @@ const defaultConfig = {
   startingLevel: 1,
   maxLevel: 5,
   cardsPerLevel: level => level * 2,
+  category: null, // Add category option for database cards
+  useDatabase: false, // Flag to use database instead of generated content
   cardContent: (level, numPairs) => Array.from({ length: numPairs }, (_, i) => ({
-  id: i,
-  content: {
-    type: 'text',
-    text: `${i + 1}`,
-    imageUrl: '',
-    solution: `${i + 1}`,
-    spelling: '',
-    description: '',
-    phonetic: '',
-  }
-}))
+    id: i,
+    content: {
+      type: 'text',
+      text: `${i + 1}`,
+      imageUrl: '',
+      solution: `${i + 1}`,
+      spelling: '',
+      description: '',
+      phonetic: '',
+    }
+  }))
 };
 
 const CardGame = ({ config = defaultConfig }) => {
@@ -46,32 +48,131 @@ const CardGame = ({ config = defaultConfig }) => {
     soundEnabled: true,
     showErrors: true,
     voice: 'Alex',
-    customWords: ''
+    customWords: '',
+    useDatabase: config.useDatabase || false,
+    category: config.category || null,
+    categories: [], // Will store available categories from database
   });
   const [soundsLoaded, setSoundsLoaded] = useState(false);
   const [isGeneratingSounds, setIsGeneratingSounds] = useState(false);
 
   // Generate cards for current level
-  const generateCards = useCallback((currentLevel) => {
-    const numPairs = config.cardsPerLevel(currentLevel);
-    const contentPairs = config.cardContent(currentLevel, numPairs);
-    
-    // Create pairs with the content
-    const pairs = contentPairs.map(content => ({
-      id: content.id,
-      content: content.content,
-      isFlipped: false,
-      isMatched: false,
-    }));
-    
-    // Duplicate cards to create pairs and shuffle
-    const cards = [...pairs, ...pairs.map(card => ({...card, id: card.id + pairs.length}))]
-      .sort(() => Math.random() - 0.5);
-    
-    setCards(cards);
-    setFlippedCards([]);
-    setMatchedPairs([]);
-    setLevelComplete(false);
+  const generateCards = useCallback(async (currentLevel) => {
+    try {
+      // Use database if configured, otherwise use static content
+      if (config.useDatabase) {
+        const numPairs = config.cardsPerLevel(currentLevel);
+        let url = `/api/cards/random?count=${numPairs}`;
+        
+        // Add category filter if specified
+        if (config.category) {
+          url = `/api/cards/category/${config.category}`;
+        }
+        
+        // Fetch cards from the database
+        const response = await fetch(`http://localhost:3001${url}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch cards from database');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.cards) {
+          throw new Error('Invalid response from server');
+        }
+        
+        // Limit to required number if needed
+        const cardData = data.cards.slice(0, numPairs);
+        
+        // Create pairs from the database cards
+        const pairs = cardData.map((card, index) => ({
+          id: index,
+          content: {
+            type: card.type || 'text',
+            text: card.text,
+            imageUrl: card.imageUrl || '',
+            solution: card.solution,
+            spelling: card.spelling || '',
+            description: card.description || '',
+            phonetic: card.phonetic || '',
+            soundPath: card.soundPath || null,
+            dbId: card.id // Store the database ID
+          },
+          isFlipped: false,
+          isMatched: false,
+        }));
+        
+        // Duplicate cards to create pairs and shuffle
+        const cards = [...pairs, ...pairs.map(card => ({...card, id: card.id + pairs.length}))]
+          .sort(() => Math.random() - 0.5);
+        
+        setCards(cards);
+        
+        // Preload sounds from database cards
+        if (pairs.length > 0) {
+          const soundsToLoad = {};
+          pairs.forEach(card => {
+            if (card.content.soundPath) {
+              const soundId = `db_${card.content.dbId}`;
+              soundsToLoad[soundId] = card.content.soundPath;
+            }
+          });
+          
+          if (Object.keys(soundsToLoad).length > 0) {
+            try {
+              await preloadSounds(soundsToLoad);
+            } catch (error) {
+              console.error('Failed to preload database card sounds:', error);
+            }
+          }
+        }
+      } else {
+        // Use the original static content generation
+        const numPairs = config.cardsPerLevel(currentLevel);
+        const contentPairs = config.cardContent(currentLevel, numPairs);
+        
+        // Create pairs with the content
+        const pairs = contentPairs.map(content => ({
+          id: content.id,
+          content: content.content,
+          isFlipped: false,
+          isMatched: false,
+        }));
+        
+        // Duplicate cards to create pairs and shuffle
+        const cards = [...pairs, ...pairs.map(card => ({...card, id: card.id + pairs.length}))]
+          .sort(() => Math.random() - 0.5);
+        
+        setCards(cards);
+      }
+      
+      setFlippedCards([]);
+      setMatchedPairs([]);
+      setLevelComplete(false);
+    } catch (error) {
+      console.error('Error generating cards:', error);
+      // Fallback to static content in case of error
+      if (config.useDatabase) {
+        const numPairs = config.cardsPerLevel(currentLevel);
+        const contentPairs = config.cardContent(currentLevel, numPairs);
+        
+        const pairs = contentPairs.map(content => ({
+          id: content.id,
+          content: content.content,
+          isFlipped: false,
+          isMatched: false,
+        }));
+        
+        const cards = [...pairs, ...pairs.map(card => ({...card, id: card.id + pairs.length}))]
+          .sort(() => Math.random() - 0.5);
+        
+        setCards(cards);
+        setFlippedCards([]);
+        setMatchedPairs([]);
+        setLevelComplete(false);
+      }
+    }
   }, [config]);
 
   // Initialize level
@@ -96,6 +197,30 @@ const CardGame = ({ config = defaultConfig }) => {
     };
     
     loadNumberSounds();
+  }, []);
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/categories');
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+        
+        const data = await response.json();
+        if (data.success && data.categories) {
+          setSettings(prev => ({
+            ...prev,
+            categories: data.categories
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    fetchCategories();
   }, []);
 
   // Timer logic
@@ -165,11 +290,17 @@ const CardGame = ({ config = defaultConfig }) => {
 
       // Match based on content.solution instead of value
       if (firstCard.content.solution === clickedCard.content.solution) {
-        // Play the number sound on successful match
+        // Play sound on successful match
         if (settings.soundEnabled && soundsLoaded) {
-          const soundNumber = parseInt(firstCard.content.solution, 10);
-          if (soundNumber >= 1 && soundNumber <= 10) {
-            playSound(`number${soundNumber}`);
+          // Check if it's a database card with custom sound
+          if (firstCard.content.dbId && firstCard.content.soundPath) {
+            playSound(`db_${firstCard.content.dbId}`);
+          } else {
+            // Fallback to number sound for backward compatibility
+            const soundNumber = parseInt(firstCard.content.solution, 10);
+            if (soundNumber >= 1 && soundNumber <= 10) {
+              playSound(`number${soundNumber}`);
+            }
           }
         }
         
@@ -294,8 +425,68 @@ const CardGame = ({ config = defaultConfig }) => {
     }
   };
 
+  // Function to create new card and add to database
+  const handleCreateNewCard = async () => {
+    try {
+      if (!settings.customWords.trim()) {
+        alert('Please enter at least one word to create a card');
+        return;
+      }
+
+      const words = settings.customWords.split(',');
+      if (words.length === 0) return;
+      
+      const word = words[0].trim();
+      if (!word) return;
+      
+      const newCard = {
+        categoryId: settings.category || 'numbers',
+        text: word,
+        type: 'text',
+        solution: word,
+        spelling: word.toLowerCase(),
+        description: `Card for ${word}`,
+      };
+      
+      setIsGeneratingSounds(true);
+      
+      // Use the combined endpoint to create card with sound
+      const response = await fetch('http://localhost:3001/api/cards/with-sound', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardData: newCard,
+          generateSound: true,
+          voice: settings.voice
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to create card');
+      }
+      
+      setIsGeneratingSounds(false);
+      
+      // Clear the word from the input
+      const remainingWords = words.slice(1).join(',');
+      setSettings(prev => ({
+        ...prev,
+        customWords: remainingWords
+      }));
+      
+      alert(`Successfully created card for "${word}"!`);
+    } catch (error) {
+      console.error('Error creating card:', error);
+      alert('Failed to create card: ' + error.message);
+      setIsGeneratingSounds(false);
+    }
+  };
+
   const renderSettings = () => (
     <div className="game-settings">
+      <h3>Game Settings</h3>
       <div className="setting-item">
         <label>
           Timer Mode:
@@ -361,7 +552,65 @@ const CardGame = ({ config = defaultConfig }) => {
       
       <hr />
       
-      <h3>Sound Generator</h3>
+      <h3>Database Settings</h3>
+      <div className="setting-item">
+        <label>
+          <input 
+            type="checkbox"
+            checked={settings.useDatabase}
+            onChange={(e) => {
+              const useDb = e.target.checked;
+              setSettings(prev => ({
+                ...prev,
+                useDatabase: useDb
+              }));
+              
+              // If toggling database on, regenerate the cards
+              if (useDb && !settings.useDatabase) {
+                generateCards(level);
+              }
+            }}
+          />
+          Use Card Database
+        </label>
+        <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
+          When enabled, cards will be loaded from the database instead of generated
+        </p>
+      </div>
+      
+      {settings.useDatabase && (
+        <div className="setting-item">
+          <label>
+            Category:
+            <select 
+              value={settings.category || ''}
+              onChange={(e) => {
+                const newCategory = e.target.value || null;
+                setSettings(prev => ({
+                  ...prev,
+                  category: newCategory
+                }));
+                
+                // Regenerate cards when category changes
+                if (newCategory !== settings.category) {
+                  generateCards(level);
+                }
+              }}
+            >
+              <option value="">Random (All Categories)</option>
+              {settings.categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      
+      <hr />
+      
+      <h3>Card & Sound Creator</h3>
       <div className="setting-item">
         <label>
           Voice:
@@ -396,7 +645,7 @@ const CardGame = ({ config = defaultConfig }) => {
         </label>
       </div>
       
-      <div className="setting-item">
+      <div className="setting-item" style={{ display: 'flex', justifyContent: 'space-between' }}>
         <button 
           onClick={handleGenerateSounds}
           disabled={isGeneratingSounds || !settings.customWords.trim()}
@@ -406,15 +655,45 @@ const CardGame = ({ config = defaultConfig }) => {
             color: 'white',
             border: 'none',
             borderRadius: '4px',
+            flex: '1',
+            marginRight: '5px',
             cursor: isGeneratingSounds ? 'not-allowed' : 'pointer'
           }}
         >
-          {isGeneratingSounds ? 'Generating...' : 'Generate Sound Files'}
+          {isGeneratingSounds ? 'Working...' : 'Generate Sounds Only'}
         </button>
-        <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
-          Sounds will be saved to public/sounds/words/
-        </p>
+        
+        <button 
+          onClick={handleCreateNewCard}
+          disabled={isGeneratingSounds || !settings.customWords.trim() || !settings.category}
+          style={{ 
+            padding: '8px 16px',
+            backgroundColor: isGeneratingSounds || !settings.category ? '#ccc' : '#2196F3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            flex: '1',
+            marginLeft: '5px',
+            cursor: (isGeneratingSounds || !settings.category) ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isGeneratingSounds ? 'Working...' : 'Create Card with Sound'}
+        </button>
       </div>
+      
+      {!settings.category && (
+        <p style={{ fontSize: '0.8em', color: '#f44336', marginTop: '5px' }}>
+          Please select a category to create cards
+        </p>
+      )}
+      
+      <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
+        Sounds will be saved to public/sounds/words/
+      </p>
+      
+      <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
+        Cards will be added to the database with their sounds
+      </p>
     </div>
   );
 
@@ -496,6 +775,8 @@ CardGame.propTypes = {
     maxLevel: PropTypes.number,
     cardsPerLevel: PropTypes.func,
     cardContent: PropTypes.func,
+    category: PropTypes.string, // Category ID for database cards
+    useDatabase: PropTypes.bool, // Whether to use database instead of generated content
   }),
 };
 

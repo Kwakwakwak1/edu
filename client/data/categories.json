@@ -1,0 +1,19 @@
+{
+  "categories": [
+    {
+      "id": "numbers",
+      "name": "Numbers",
+      "description": "Basic number cards"
+    },
+    {
+      "id": "animals",
+      "name": "Animals",
+      "description": "Animal cards"
+    },
+    {
+      "id": "colors",
+      "name": "Colors",
+      "description": "Color cards"
+    }
+  ]
+}

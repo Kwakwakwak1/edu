@@ -1,0 +1,96 @@
+{
+  "cards": [
+    {
+      "id": "1",
+      "categoryId": "numbers",
+      "text": "1",
+      "type": "text",
+      "solution": "1",
+      "spelling": "one",
+      "phonetic": "wʌn",
+      "description": "The number one",
+      "soundPath": "1.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "categoryId": "numbers",
+      "text": "2",
+      "type": "text",
+      "solution": "2",
+      "spelling": "two",
+      "phonetic": "tuː",
+      "description": "The number two",
+      "soundPath": "2.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "categoryId": "numbers",
+      "text": "3",
+      "type": "text",
+      "solution": "3",
+      "spelling": "three",
+      "phonetic": "θriː",
+      "description": "The number three",
+      "soundPath": "3.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "categoryId": "numbers",
+      "text": "4",
+      "type": "text",
+      "solution": "4",
+      "spelling": "four",
+      "phonetic": "fɔːr",
+      "description": "The number four",
+      "soundPath": "4.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "categoryId": "numbers",
+      "text": "5",
+      "type": "text",
+      "solution": "5",
+      "spelling": "five",
+      "phonetic": "faɪv",
+      "description": "The number five",
+      "soundPath": "5.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "cat1",
+      "categoryId": "animals",
+      "text": "Cat",
+      "type": "text",
+      "solution": "Cat",
+      "spelling": "cat",
+      "phonetic": "kæt",
+      "description": "A small domesticated carnivorous mammal",
+      "soundPath": "words/cat.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    },
+    {
+      "id": "dog1",
+      "categoryId": "animals",
+      "text": "Dog",
+      "type": "text",
+      "solution": "Dog",
+      "spelling": "dog",
+      "phonetic": "dɒɡ",
+      "description": "A domesticated carnivorous mammal",
+      "soundPath": "words/dog.mp3",
+      "imageUrl": "",
+      "createdAt": "2024-03-24T12:00:00.000Z"
+    }
+  ],
+  "lastUpdated": "2024-03-24T12:00:00.000Z"
+}
